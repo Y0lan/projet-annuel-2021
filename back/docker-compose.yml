@@ -11,3 +11,4 @@ services:
     restart: always
     env_file:
       - database.env
+
