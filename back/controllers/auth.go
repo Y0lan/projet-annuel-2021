@@ -1,11 +1,11 @@
 package controllers
 
 import (
+	"authentification/models"
+	"authentification/repository"
+	"authentification/security"
+	"authentification/util"
 	"fmt"
-	"go-fiber-auth-api/models"
-	"go-fiber-auth-api/repository"
-	"go-fiber-auth-api/security"
-	"go-fiber-auth-api/util"
 	"log"
 	"net/http"
 	"strings"

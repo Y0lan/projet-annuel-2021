@@ -1,4 +1,4 @@
-module go-fiber-auth-api
+module authentification
 
 go 1.15
 

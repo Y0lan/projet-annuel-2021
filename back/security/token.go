@@ -2,7 +2,7 @@ package security
 
 import (
 	"fmt"
-	"go-fiber-auth-api/util"
+	"authentification/util"
 	"os"
 	"time"
 

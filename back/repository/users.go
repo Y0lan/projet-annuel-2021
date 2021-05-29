@@ -1,8 +1,8 @@
 package repository
 
 import (
-	"go-fiber-auth-api/db"
-	"go-fiber-auth-api/models"
+	"authentification/db"
+	"authentification/models"
 
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"

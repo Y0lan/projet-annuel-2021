@@ -1,10 +1,10 @@
 package main
 
 import (
-	"go-fiber-auth-api/controllers"
-	"go-fiber-auth-api/db"
-	"go-fiber-auth-api/repository"
-	"go-fiber-auth-api/routes"
+	"authentification/controllers"
+	"authentification/db"
+	"authentification/repository"
+	"authentification/routes"
 	"log"
 	"net/http"
 

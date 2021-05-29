@@ -1,8 +1,8 @@
 package routes
 
 import (
-	"go-fiber-auth-api/security"
-	"go-fiber-auth-api/util"
+	"authentification/security"
+	"authentification/util"
 	"net/http"
 
 	"github.com/gofiber/fiber/v2"
