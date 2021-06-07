@@ -13,7 +13,7 @@
     -->
 
     <!-- options of editor
-    - share link of exercise
+    - share link of exercis
     - choose language
     - change color scheme
     -->
