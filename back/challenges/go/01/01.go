@@ -1,5 +1,6 @@
-package _1
+package main
 
-func HelloWorld() interface{} {
-	return 0
+func HelloWorld() string {
+	// do something here
+	return ""
 }

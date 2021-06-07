@@ -380,3 +380,4 @@ temp/
 # End of https://www.toptal.com/developers/gitignore/api/node,go,jetbrains+all,jetbrains+iml,jetbrains,linux
 
 
+/sandbox/go/.dockerignore
