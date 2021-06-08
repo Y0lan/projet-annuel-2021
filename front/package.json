@@ -1,10 +1,9 @@
 {
-  "name": "svelte.dev",
+  "name": "progress.io",
   "version": "1.0.0",
-  "description": "Docs and examples for Svelte",
+  "description": "Become your master",
   "scripts": {
     "dev": "npm run copy-workers && sapper dev",
-    "copy-workers": "node scripts/copy-workers.js",
     "migrate": "node-pg-migrate -r dotenv/config",
     "build": "npm run copy-workers && sapper build --legacy",
     "update": "node scripts/update_template.js",
