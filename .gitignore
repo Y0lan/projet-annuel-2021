@@ -381,3 +381,4 @@ temp/
 
 
 /sandbox/go/.dockerignore
+/sandbox/docker/tests/rust/Cargo.lock

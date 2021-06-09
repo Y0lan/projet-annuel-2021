@@ -2,7 +2,7 @@
 
 for dir in */ ; do
   cd "$dir" || exit
-  ./check.sh
+  ./test.sh
   cd ..
 done
 
