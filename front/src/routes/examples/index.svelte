@@ -144,7 +144,7 @@
 		opacity: 0.6;
 	}
 
-	/* temp fix for #2499 and #2550 while waiting for a fix for https://github.com/sveltejs/svelte-repl/issues/8 */
+
 
 	.repl-container :global(.tab-content),
 	.repl-container :global(.tab-content.visible) {
