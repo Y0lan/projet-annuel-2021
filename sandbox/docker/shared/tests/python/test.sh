@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo "-------------------"
-echo "testing python installation"
+echo "testing PYTHON installation"
 function run_program_and_test() {
   # run all python files
   for python_file in *.py; do
