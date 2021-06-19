@@ -1,0 +1,59 @@
+{
+  "bundler": "rollup",
+  "shimport": "2.0.4",
+  "assets": {
+    "main": "client.281f0700.js"
+  },
+  "css": {
+    "main": [
+      "client-fe45b118.css"
+    ]
+  },
+  "dependencies": {
+    "index.svelte": [
+      "index.9a1773df.js",
+      "inject_styles.5607aec6.js"
+    ],
+    "examples/_TableOfContents.svelte": [
+      "index.10013313.js",
+      "config.d9ed0b54.js",
+      "inject_styles.5607aec6.js",
+      "config-38af743a.css",
+      "index-01abdd1e.css"
+    ],
+    "examples/index.svelte": [
+      "index.10013313.js",
+      "config.d9ed0b54.js",
+      "inject_styles.5607aec6.js",
+      "config-38af743a.css",
+      "index-01abdd1e.css"
+    ],
+    "tutorial/_layout.svelte": [
+      "_layout.ae01e982.js",
+      "inject_styles.5607aec6.js"
+    ],
+    "tutorial/index.svelte": [
+      "index.f2bd1418.js",
+      "inject_styles.5607aec6.js"
+    ],
+    "tutorial/[slug]/_TableOfContents.svelte": [
+      "index.e6259bff.js",
+      "config.d9ed0b54.js",
+      "inject_styles.5607aec6.js",
+      "config-38af743a.css",
+      "index-e0bfb7e8.css"
+    ],
+    "tutorial/[slug]/index.svelte": [
+      "index.e6259bff.js",
+      "config.d9ed0b54.js",
+      "inject_styles.5607aec6.js",
+      "config-38af743a.css",
+      "index-e0bfb7e8.css"
+    ],
+    "apps/index.svelte": [
+      "index.8348d6de.js",
+      "inject_styles.5607aec6.js",
+      "index-8e2f1dae.css"
+    ]
+  }
+}
