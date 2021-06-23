@@ -24,7 +24,9 @@ function run_program_and_test() {
     if [ -f "err.log" ]; then
       rm err.log
     fi
+    return 0
 }
 
 run_program_and_test
 echo "GO OK"
+exit 0

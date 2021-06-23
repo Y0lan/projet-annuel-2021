@@ -26,8 +26,9 @@ function run_program_and_test() {
     fi
     rm -rf target
     rm Cargo.lock
-
+    return 0
 }
 
 run_program_and_test
 echo "RUST OK"
+exit 0

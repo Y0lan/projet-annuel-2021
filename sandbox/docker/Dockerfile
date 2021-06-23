@@ -23,6 +23,11 @@ ENV HOME /home/unprivileged
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
 ENV PATH $PATH:$HOME/.cargo/bin
 
+
+HEALTHCHECK CMD ./$HOME/shared/tests/test_all.sh || exit 1
+COPY compile.go compile.go
+RUN go run compile.go
+
 # install isolate
 # RUN install_packages libcap-dev git
 # RUN git clone https://github.com/ioi/isolate /tmp/isolate

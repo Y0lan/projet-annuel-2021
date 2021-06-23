@@ -6,7 +6,12 @@ services:
     build: .
     user: "unprivileged"
     working_dir: "/home/unprivileged"
-    command: /bin/bash -c "while sleep 1000; do :; done"
     volumes:
       - ./shared:/home/unprivileged/shared
+    healthcheck:
+      test: "${DOCKER_HEALTHCHECK_TEST:-./shared/tests/test_all.sh}"
+      interval: "60s"
+      timeout: "3s"
+      retries: 3
+
 

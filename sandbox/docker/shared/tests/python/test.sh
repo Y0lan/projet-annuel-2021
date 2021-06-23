@@ -9,7 +9,7 @@ function run_program_and_test() {
       cat err.log
       rm err.log
       echo "PYTHON KO"
-      return 1
+      exit 1
     fi
   done
 
@@ -17,7 +17,9 @@ function run_program_and_test() {
   if [ -f "err.log" ]; then
     rm err.log
   fi
+  return 0
 }
 
 run_program_and_test
 echo "PYTHON OK"
+exit 0
