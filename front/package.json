@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Become your master",
   "scripts": {
-    "dev": "sapper dev",
+    "dev": "npm run update && sapper dev",
     "migrate": "node-pg-migrate -r dotenv/config",
     "build": "npm run copy-workers && sapper build --legacy",
     "update": "node scripts/update_template.js",
