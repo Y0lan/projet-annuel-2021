@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"github.com/gorilla/mux"
 	"io"
 	"log"
@@ -9,20 +10,14 @@ import (
 	"os"
 )
 
-type language string
-type languages []language
+type languages []string
 
-type file struct {
-	name      string
-	extension language
-}
-
-func isLangSupported(givenLanguage language) bool {
+func isExtensionSupported(givenLanguage string) bool {
 
 	supportedLanguages := languages{
 		"py",
 		"go",
-		"rust",
+		"rs",
 	}
 
 	for _, supportedLanguage := range supportedLanguages {
@@ -34,31 +29,63 @@ func isLangSupported(givenLanguage language) bool {
 	return false
 }
 
-func UploadFile(w http.ResponseWriter, r *http.Request) {
-	file, handler, err := r.FormFile("file")
-	fileName := r.FormValue("file_name")
-	if err != nil {
-		panic(err)
-	}
-	defer func(file multipart.File) {
-		err := file.Close()
-		if err != nil {
-			//TODO
-		}
-	}(file)
 
-	f, err := os.OpenFile("./watch"+handler.Filename, os.O_WRONLY|os.O_CREATE, 0770)
+func getExtensionOf(header multipart.FileHeader) (string, error) {
+	var extension string = ""
+	isExtension := false
+	for char, _ := range header.Filename {
+		if isExtension {
+			extension += string(rune(char))
+		}
+		if char == '.' {
+			isExtension = true
+		}
+	}
+	if isExtensionSupported(extension) {
+		return extension, nil
+	}
+	return "", errors.New("error: invalid extension")
+}
+
+func WriteFile(code multipart.File, header multipart.FileHeader, location string) error  {
+
+	extension, err := getExtensionOf(header)
+	if err != nil {
+		return err
+	}
+
+	defer func(code multipart.File) {
+		err := code.Close()
+		if err != nil {
+			return
+		}
+	}(code)
+
+	destination, err := os.OpenFile(location + "/unsolved." + extension, os.O_RDONLY|os.O_CREATE, 0770)
 	if err != nil {
 		panic(err)
 	}
 	defer func(f *os.File) {
 		err := f.Close()
 		if err != nil {
-			//TODO
+			return
 		}
-	}(f)
-	_, _ = io.WriteString(w, "File "+fileName+" Uploaded successfully")
-	_, _ = io.Copy(f, file)
+	}(destination)
+
+	_, _ = io.Copy(destination, code)
+	return nil
+}
+
+func UploadFile(w http.ResponseWriter, r *http.Request) {
+	//TODO fix this shit
+	for file, header, err := range r.FormFile("file") {
+		if err != nil {
+			panic(err)
+		}
+		WriteFile(file, *header, "./shared")
+	}
+
+	_, _ = io.WriteString(w, "File Uploaded successfully")
 }
 
 func main() {
