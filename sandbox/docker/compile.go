@@ -47,7 +47,7 @@ func UploadFile(w http.ResponseWriter, r *http.Request) {
 		}
 	}(file)
 
-	f, err := os.OpenFile(handler.Filename, os.O_WRONLY|os.O_CREATE, 0770)
+	f, err := os.OpenFile("./watch"+handler.Filename, os.O_WRONLY|os.O_CREATE, 0770)
 	if err != nil {
 		panic(err)
 	}
