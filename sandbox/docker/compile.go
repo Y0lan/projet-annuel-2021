@@ -1,18 +1,35 @@
 package main
 
 import (
-	"errors"
+	"encoding/json"
+	"fmt"
 	"github.com/gorilla/mux"
-	"io"
+	"github.com/gorilla/schema"
 	"log"
-	"mime/multipart"
 	"net/http"
-	"os"
 )
 
 type languages []string
 
-func isExtensionSupported(givenLanguage string) bool {
+var decoder = schema.NewDecoder()
+
+type CodeInputByUser struct {
+	Code string
+	Test string
+	Lang string
+}
+
+type JSONResponse struct {
+	Status      string `json:"status"`
+	Error       string `json:"error"`
+	Stdout      string `json:"stdout"`
+	Stderr      string `json:"stderr"`
+	TestPassed  bool   `json:"test_passed"`
+	Timer       string `json:"timer"`
+	CodeQuality int    `json:"code-quality"`
+}
+
+func isLanguageSupported(givenLanguage string) bool {
 
 	supportedLanguages := languages{
 		"py",
@@ -29,67 +46,79 @@ func isExtensionSupported(givenLanguage string) bool {
 	return false
 }
 
-
-func getExtensionOf(header multipart.FileHeader) (string, error) {
-	var extension string = ""
-	isExtension := false
-	for char, _ := range header.Filename {
-		if isExtension {
-			extension += string(rune(char))
-		}
-		if char == '.' {
-			isExtension = true
-		}
-	}
-	if isExtensionSupported(extension) {
-		return extension, nil
-	}
-	return "", errors.New("error: invalid extension")
+func compileCode() (string, string, error) {
+	return "", "", nil
 }
 
-func WriteFile(code multipart.File, header multipart.FileHeader, location string) error  {
+func runTest() (string, bool, error) {
+	return "", false, nil
+}
 
-	extension, err := getExtensionOf(header)
-	if err != nil {
-		return err
+func HandleForm(writer http.ResponseWriter, request *http.Request) {
+	writer.Header().Set("Content-Type", "application/json")
+	jsonResponse := JSONResponse{
+		Status:      "success",
+		Error:       "",
+		Stdout:      "",
+		Stderr:      "",
+		TestPassed:  false,
+		Timer:       "None", // NO TIME
+		CodeQuality: 0,
 	}
-
-	defer func(code multipart.File) {
-		err := code.Close()
+	err := request.ParseForm()
+	if err != nil {
+		print("Error parsing form!")
+		writer.WriteHeader(http.StatusBadRequest)
+		jsonResponse.Status = "error"
+		response, err := json.Marshal(&jsonResponse)
 		if err != nil {
+			fmt.Println(err)
+			http.Error(writer, "Error encoding response object", http.StatusInternalServerError)
 			return
 		}
-	}(code)
-
-	destination, err := os.OpenFile(location + "/unsolved." + extension, os.O_RDONLY|os.O_CREATE, 0770)
-	if err != nil {
-		panic(err)
+		writer.Write(response)
 	}
-	defer func(f *os.File) {
-		err := f.Close()
+
+	var code CodeInputByUser
+
+	err = decoder.Decode(&code, request.PostForm)
+	if err != nil {
+		print("Error parsing form!")
+		writer.WriteHeader(http.StatusBadRequest)
+		jsonResponse.Status = "error"
+		response, err := json.Marshal(&jsonResponse)
 		if err != nil {
+			fmt.Println(err)
+			http.Error(writer, "Error encoding response object", http.StatusInternalServerError)
 			return
 		}
-	}(destination)
+		writer.Write(response)
+	}
 
-	_, _ = io.Copy(destination, code)
+	if !isLanguageSupported(code.Lang) {
+		jsonResponse.Status = "error"
+		jsonResponse.Error = "language " + code.Lang + " is not supported"
+		writer.WriteHeader(http.StatusBadRequest)
+
+	}
+
+	fmt.Printf("%+v\n", code)
+	response, err := json.Marshal(&jsonResponse)
+
+	if err != nil {
+		fmt.Println(err)
+		http.Error(writer, "Error encoding response object", http.StatusInternalServerError)
+		return
+	}
+	writer.Write(response)
+}
+
+func WriteFile(code, extension, location string) error {
 	return nil
-}
-
-func UploadFile(w http.ResponseWriter, r *http.Request) {
-	//TODO fix this shit
-	for file, header, err := range r.FormFile("file") {
-		if err != nil {
-			panic(err)
-		}
-		WriteFile(file, *header, "./shared")
-	}
-
-	_, _ = io.WriteString(w, "File Uploaded successfully")
 }
 
 func main() {
 	router := mux.NewRouter()
-	router.HandleFunc("/compile", UploadFile).Methods("POST")
+	router.HandleFunc("/compile", HandleForm)
 	log.Fatal(http.ListenAndServe(":8080", router))
 }
