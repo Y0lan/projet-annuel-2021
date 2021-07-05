@@ -1,6 +1,6 @@
 #!/bin/bash
 
-test_dir="$HOME/shared/tests"
+test_dir="$HOME/api/tests"
 for dir in "$test_dir"/*/ ; do
   dir=${dir%/}
   cd "$dir" || exit

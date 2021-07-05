@@ -1,0 +1,15 @@
+version: "3"
+services:
+  sandbox:
+    image: yolanmq/sandbox
+    container_name: sandbox
+    build: api
+    user: "runner"
+    working_dir: "/home/runner/api"
+    healthcheck:
+      test: "${DOCKER_HEALTHCHECK_TEST:-./tests/test_all.sh}"
+      interval: "60s"
+      timeout: "3s"
+      retries: 3
+
+
