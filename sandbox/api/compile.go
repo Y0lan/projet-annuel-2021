@@ -77,7 +77,7 @@ func compilePython(code string) (string, string) {
 	out, err := exec.Command("python3", pythonFile.Name()).CombinedOutput()
 	if err != nil {
 		success = "failed"
-		fmt.Println("the code is not working")
+		fmt.Println("error in the given python code")
 		fmt.Println(err.Error())
 	}
 	return string(out), success
@@ -98,16 +98,27 @@ func compileRust(code string) (string, string) {
 	out, err = exec.Command("./binary").CombinedOutput()
 	if err != nil {
 		success = "failed"
-		fmt.Println("impossible to run binary of rust code")
+		fmt.Println("impossible to run the binary of the given rust code")
 		fmt.Println(err.Error())
+		os.Remove("binary")
 		return string(out), success
 	}
 
 	return string(out), success
 }
 
-func compileGo(code string) (string, bool) {
-	return "", false
+func compileGo(code string) (string, string) {
+	success := "success"
+	goFile := createFile(code, "go")
+	defer os.Remove(goFile.Name())
+	out, err := exec.Command("go", "run", goFile.Name()).CombinedOutput()
+	if err != nil {
+		success = "failed"
+		fmt.Println("impossible to run this go code")
+		fmt.Println(err.Error())
+	}
+
+	return string(out), success
 }
 
 func testPython(code string) (string, bool) {
@@ -132,7 +143,8 @@ func compileCode(code, language string) (string, string) {
 		output, success = compilePython(code)
 	case "rs":
 		output, success = compileRust(code)
-	case "go": // compile go
+	case "go":
+		output, success = compileGo(code)
 	}
 	return output, success
 }
