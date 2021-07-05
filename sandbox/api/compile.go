@@ -199,10 +199,13 @@ func HandleForm(writer http.ResponseWriter, request *http.Request) {
 
 	}
 
-	jsonResponse.Output, jsonResponse.Status = compileCode(code.Code, code.Lang)
+	var output string
+	output, jsonResponse.Status = compileCode(code.Code, code.Lang)
 	if jsonResponse.Status == "success" {
+		jsonResponse.Output = output
 		jsonResponse.CompiledSuccessfully = true
 	} else {
+		jsonResponse.Error = output
 		jsonResponse.CompiledSuccessfully = false
 	}
 	response, err := json.Marshal(&jsonResponse)
