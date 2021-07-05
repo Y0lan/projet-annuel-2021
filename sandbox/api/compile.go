@@ -73,7 +73,7 @@ func closeFile(file os.File) {
 func compilePython(code string) (string, string) {
 	success := "success"
 	pythonFile := createFile(code, "py")
-	//TODO remove file when done
+	defer os.Remove(pythonFile.Name())
 	out, err := exec.Command("python3", pythonFile.Name()).CombinedOutput()
 	if err != nil {
 		success = "failed"
@@ -83,8 +83,27 @@ func compilePython(code string) (string, string) {
 	return string(out), success
 }
 
-func compileRust(code string) (string, bool) {
-	return "", false
+func compileRust(code string) (string, string) {
+	success := "success"
+	rustFile := createFile(code, "rs")
+	defer os.Remove(rustFile.Name())
+	out, err := exec.Command("rustc", "--crate-name", "binary", rustFile.Name()).CombinedOutput()
+	if err != nil {
+		success = "failed"
+		fmt.Println("impossible to compile rust code")
+		fmt.Println(err.Error())
+		return string(out), success
+	}
+
+	out, err = exec.Command("./binary").CombinedOutput()
+	if err != nil {
+		success = "failed"
+		fmt.Println("impossible to run binary of rust code")
+		fmt.Println(err.Error())
+		return string(out), success
+	}
+
+	return string(out), success
 }
 
 func compileGo(code string) (string, bool) {
@@ -111,7 +130,8 @@ func compileCode(code, language string) (string, string) {
 	switch language {
 	case "py":
 		output, success = compilePython(code)
-	case "rs": // compile rust
+	case "rs":
+		output, success = compileRust(code)
 	case "go": // compile go
 	}
 	return output, success
@@ -173,10 +193,7 @@ func HandleForm(writer http.ResponseWriter, request *http.Request) {
 	} else {
 		jsonResponse.CompiledSuccessfully = false
 	}
-
-	fmt.Printf("%+v\n", code)
 	response, err := json.Marshal(&jsonResponse)
-
 	if err != nil {
 		fmt.Println(err)
 		http.Error(writer, "Error encoding response object", http.StatusInternalServerError)
