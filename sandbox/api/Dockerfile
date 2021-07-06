@@ -34,6 +34,10 @@ ENV PATH $PATH:$HOME/.cargo/bin
 # add project files
 COPY compile.go $API/compile.go
 ADD tests $API/tests
+USER root
+RUN chown -R $USER $API
+RUN chmod -R u+rwx $API
+USER $USER
 
 
 # verify everything is working

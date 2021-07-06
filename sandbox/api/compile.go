@@ -196,7 +196,14 @@ func HandleForm(writer http.ResponseWriter, request *http.Request) {
 		jsonResponse.Status = "error"
 		jsonResponse.Error = "language " + code.Lang + " is not supported"
 		writer.WriteHeader(http.StatusBadRequest)
-
+		response, err := json.Marshal(&jsonResponse)
+		if err != nil {
+			fmt.Println(err)
+			http.Error(writer, "Error encoding response object", http.StatusInternalServerError)
+			return
+		}
+		writer.Write(response)
+		return
 	}
 
 	var output string
@@ -204,7 +211,8 @@ func HandleForm(writer http.ResponseWriter, request *http.Request) {
 	if jsonResponse.Status == "success" {
 		jsonResponse.Output = output
 		jsonResponse.CompiledSuccessfully = true
-	} else {
+	}
+	if jsonResponse.Status == "failed" {
 		jsonResponse.Error = output
 		jsonResponse.CompiledSuccessfully = false
 	}
