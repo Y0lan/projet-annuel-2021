@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path/filepath"
 )
 
 type languages []string
@@ -33,26 +34,34 @@ type JSONResponse struct {
 	CodeQuality          int    `json:"code-quality"`
 }
 
-func isLanguageSupported(givenLanguage string) bool {
+func isLanguageSupported(givenLanguage string) (isSupported bool) {
 
+	isSupported = false
 	supportedLanguages := languages{
 		"py",
 		"go",
 		"rs",
 	}
-
 	for _, supportedLanguage := range supportedLanguages {
 		if givenLanguage == supportedLanguage {
-			return true
+			isSupported = true
+			return
 		}
 	}
-
-	return false
+	return
 }
 
-func createFile(code, extension string) os.File {
+func createFile(code, extension, fileName string) os.File {
 	content := []byte(code)
-	tmpFile, err := ioutil.TempFile("", "*."+extension)
+	var tmpFile *os.File
+	var err error
+	if fileName == "" {
+		tmpFile, err = ioutil.TempFile("", "*."+extension)
+	} else {
+		dir := os.TempDir()
+		fileName = filepath.Join(dir, fileName+"."+extension)
+		tmpFile, err = os.OpenFile(fileName, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0600)
+	}
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -70,9 +79,9 @@ func closeFile(file os.File) {
 	}
 }
 
-func compilePython(code string) (string, string) {
-	success := "success"
-	pythonFile := createFile(code, "py")
+func compilePython(code string) (output, success string) {
+	success = "success"
+	pythonFile := createFile(code, "py", "")
 	defer os.Remove(pythonFile.Name())
 	out, err := exec.Command("python3", pythonFile.Name()).CombinedOutput()
 	if err != nil {
@@ -80,12 +89,13 @@ func compilePython(code string) (string, string) {
 		log.Println("error in the given python code")
 		log.Println(err.Error())
 	}
-	return string(out), success
+	output = string(out)
+	return output, success
 }
 
 func compileRust(code string) (output, success string) {
 	success = "success"
-	rustFile := createFile(code, "rs")
+	rustFile := createFile(code, "rs", "")
 	defer os.Remove(rustFile.Name())
 	out, err := exec.Command("rustc", "--crate-name", "binary", rustFile.Name()).CombinedOutput()
 	if err != nil {
@@ -111,7 +121,7 @@ func compileRust(code string) (output, success string) {
 
 func compileGo(code string) (output, success string) {
 	success = "success"
-	goFile := createFile(code, "go")
+	goFile := createFile(code, "go", "")
 	defer os.Remove(goFile.Name())
 	out, err := exec.Command("go", "run", goFile.Name()).CombinedOutput()
 	if err != nil {
@@ -123,15 +133,31 @@ func compileGo(code string) (output, success string) {
 	return
 }
 
-func testPython(code, test string) (success, out string) {
-	return success, out
-}
+func testPython(code, test string) (output, success string) {
 
-func testRust(code, test string) (success, out string) {
+	success = "success"
+
+	pythonCodeFile := createFile(code, "py", "main")
+	defer os.Remove(pythonCodeFile.Name())
+
+	pythonTestFile := createFile(test, "py", "")
+	defer os.Remove(pythonTestFile.Name())
+
+	out, err := exec.Command("python3", pythonTestFile.Name()).CombinedOutput()
+	if err != nil {
+		success = "failed"
+		log.Println("impossible to run python test")
+		log.Println(err.Error())
+	}
+	output = string(out)
 	return
 }
 
-func testGo(code, test string) (success, out string) {
+func testRust(code, test string) (output, success string) {
+	return
+}
+
+func testGo(code, test string) (output, success string) {
 	return
 }
 
@@ -216,20 +242,27 @@ func HandleForm(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	var output string
-	output, jsonResponse.Status = compileCode(code.Code, code.Lang)
+	var compilationOutput string
+	compilationOutput, jsonResponse.Status = compileCode(code.Code, code.Lang)
 	if jsonResponse.Status == "success" {
-		jsonResponse.Output = output
+		jsonResponse.Output = compilationOutput
 		jsonResponse.CompiledSuccessfully = true
 	}
 	if jsonResponse.Status == "failed" {
-		jsonResponse.Error = output
+		jsonResponse.Error = compilationOutput
 		jsonResponse.CompiledSuccessfully = false
 	}
 
-	output, jsonResponse.Status = testCode(code.Code, code.Test, code.Lang)
-
-
+	var testOutput string
+	testOutput, jsonResponse.Status = testCode(code.Code, code.Test, code.Lang)
+	if jsonResponse.Status == "success" {
+		jsonResponse.Output = compilationOutput + testOutput
+		jsonResponse.TestPassed = true
+	}
+	if jsonResponse.Status == "failed" {
+		jsonResponse.Error = compilationOutput + testOutput
+		jsonResponse.TestPassed = false
+	}
 
 	response, err := json.Marshal(&jsonResponse)
 	if err != nil {
