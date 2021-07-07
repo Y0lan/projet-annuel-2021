@@ -77,67 +77,68 @@ func compilePython(code string) (string, string) {
 	out, err := exec.Command("python3", pythonFile.Name()).CombinedOutput()
 	if err != nil {
 		success = "failed"
-		fmt.Println("error in the given python code")
-		fmt.Println(err.Error())
+		log.Println("error in the given python code")
+		log.Println(err.Error())
 	}
 	return string(out), success
 }
 
-func compileRust(code string) (string, string) {
-	success := "success"
+func compileRust(code string) (output, success string) {
+	success = "success"
 	rustFile := createFile(code, "rs")
 	defer os.Remove(rustFile.Name())
 	out, err := exec.Command("rustc", "--crate-name", "binary", rustFile.Name()).CombinedOutput()
 	if err != nil {
 		success = "failed"
-		fmt.Println("impossible to compile rust code")
-		fmt.Println(err.Error())
+		log.Println("impossible to compile rust code")
+		log.Println(err.Error())
 		return string(out), success
 	}
 
 	out, err = exec.Command("./binary").CombinedOutput()
 	if err != nil {
 		success = "failed"
-		fmt.Println("impossible to run the binary of the given rust code")
-		fmt.Println(err.Error())
+		log.Println("impossible to run the binary of the given rust code")
+		log.Println(err.Error())
 		os.Remove("binary")
-		return string(out), success
+		output = string(out)
+		return
 	}
 
+	output = string(out)
 	return string(out), success
 }
 
-func compileGo(code string) (string, string) {
-	success := "success"
+func compileGo(code string) (output, success string) {
+	success = "success"
 	goFile := createFile(code, "go")
 	defer os.Remove(goFile.Name())
 	out, err := exec.Command("go", "run", goFile.Name()).CombinedOutput()
 	if err != nil {
 		success = "failed"
-		fmt.Println("impossible to run this go code")
-		fmt.Println(err.Error())
+		log.Println("impossible to run this go code")
+		log.Println(err.Error())
 	}
-
-	return string(out), success
+	output = string(out)
+	return
 }
 
-func testPython(code string) (string, bool) {
-	return "", false
+func testPython(code, test string) (success, out string) {
+	return success, out
 }
 
-func testRust(code string) (string, bool) {
-	return "", false
+func testRust(code, test string) (success, out string) {
+	return
 }
 
-func testGo(code string) (string, string, bool) {
-	return "", "", false
+func testGo(code, test string) (success, out string) {
+	return
 }
 
 // compileCode takes the code in arguments and the language
 // and send back the output, and a boolean to know if the program compile successfully
-func compileCode(code, language string) (string, string) {
-	output := ""
-	success := "failed"
+func compileCode(code, language string) (output, success string) {
+	success = "failed"
 	switch language {
 	case "py":
 		output, success = compilePython(code)
@@ -146,13 +147,22 @@ func compileCode(code, language string) (string, string) {
 	case "go":
 		output, success = compileGo(code)
 	}
-	return output, success
+	return
 }
 
 // testCode takes the code in arguments and the tests and the language
-// and send back the stdout, stderr, and a boolean to know if the program tested successfully
-func testCode(code, test, language string) (string, string, bool) {
-	return "", "", false
+// and send back the stdout  and a boolean to know if the program tested successfully
+func testCode(code, test, language string) (output, success string) {
+	success = "failed"
+	switch language {
+	case "py":
+		output, success = testPython(code, test)
+	case "rs":
+		output, success = testRust(code, test)
+	case "go":
+		output, success = testGo(code, test)
+	}
+	return
 }
 
 func HandleForm(writer http.ResponseWriter, request *http.Request) {
@@ -208,6 +218,11 @@ func HandleForm(writer http.ResponseWriter, request *http.Request) {
 		jsonResponse.Error = output
 		jsonResponse.CompiledSuccessfully = false
 	}
+
+	output, jsonResponse.Status = testCode(code.Code, code.Test, code.Lang)
+
+
+
 	response, err := json.Marshal(&jsonResponse)
 	if err != nil {
 		fmt.Println(err)

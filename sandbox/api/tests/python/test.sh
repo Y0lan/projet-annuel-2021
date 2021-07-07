@@ -17,6 +17,10 @@ function run_program_and_test() {
   if [ -f "err.log" ]; then
     rm err.log
   fi
+  if [ -d "__pycache__" ]; then
+    rm -rf __pycache__
+  fi
+
   return 0
 }
 
