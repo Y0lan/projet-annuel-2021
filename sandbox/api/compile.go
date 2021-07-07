@@ -11,7 +11,9 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
+	"strings"
 )
 
 type languages []string
@@ -51,12 +53,12 @@ func isLanguageSupported(givenLanguage string) (isSupported bool) {
 	return
 }
 
-func createFile(code, extension, fileName string) os.File {
+func createFile(code, extension, fileName, prefix string) os.File {
 	content := []byte(code)
 	var tmpFile *os.File
 	var err error
 	if fileName == "" {
-		tmpFile, err = ioutil.TempFile("", "*."+extension)
+		tmpFile, err = ioutil.TempFile("", prefix+"*."+extension)
 	} else {
 		dir := os.TempDir()
 		fileName = filepath.Join(dir, fileName+"."+extension)
@@ -81,7 +83,7 @@ func closeFile(file os.File) {
 
 func compilePython(code string) (output, success string) {
 	success = "success"
-	pythonFile := createFile(code, "py", "")
+	pythonFile := createFile(code, "py", "", "")
 	defer os.Remove(pythonFile.Name())
 	out, err := exec.Command("python3", pythonFile.Name()).CombinedOutput()
 	if err != nil {
@@ -95,7 +97,7 @@ func compilePython(code string) (output, success string) {
 
 func compileRust(code string) (output, success string) {
 	success = "success"
-	rustFile := createFile(code, "rs", "")
+	rustFile := createFile(code, "rs", "", "")
 	defer os.Remove(rustFile.Name())
 	out, err := exec.Command("rustc", "--crate-name", "binary", rustFile.Name()).CombinedOutput()
 	if err != nil {
@@ -121,7 +123,7 @@ func compileRust(code string) (output, success string) {
 
 func compileGo(code string) (output, success string) {
 	success = "success"
-	goFile := createFile(code, "go", "")
+	goFile := createFile(code, "go", "", "")
 	defer os.Remove(goFile.Name())
 	out, err := exec.Command("go", "run", goFile.Name()).CombinedOutput()
 	if err != nil {
@@ -137,10 +139,10 @@ func testPython(code, test string) (output, success string) {
 
 	success = "success"
 
-	pythonCodeFile := createFile(code, "py", "main")
+	pythonCodeFile := createFile(code, "py", "main", "")
 	defer os.Remove(pythonCodeFile.Name())
 
-	pythonTestFile := createFile(test, "py", "")
+	pythonTestFile := createFile(test, "py", "", "")
 	defer os.Remove(pythonTestFile.Name())
 
 	out, err := exec.Command("python3", pythonTestFile.Name()).CombinedOutput()
@@ -154,6 +156,40 @@ func testPython(code, test string) (output, success string) {
 }
 
 func testRust(code, test string) (output, success string) {
+
+	success = "success"
+
+	rustCodeFile := createFile(code, "rs", "", "code")
+	defer os.Remove(rustCodeFile.Name())
+
+	// Replace EXERCISE_FILE_RANDOM by the name of the file so the test file can access the function
+	var replacer = strings.NewReplacer("EXERCISE_FILE_RANDOM", strings.TrimSuffix(filepath.Base(rustCodeFile.Name()), path.Ext(rustCodeFile.Name())))
+	test = replacer.Replace(test)
+
+	rustTestFile := createFile(test, "rs", "", "")
+	defer os.Remove(rustTestFile.Name())
+
+	out, err := exec.Command("rustc", "--test", "--crate-name", "test", rustTestFile.Name()).CombinedOutput()
+
+	if err != nil {
+		success = "failed"
+		log.Println("impossible to compile rust test")
+		log.Println(err.Error())
+		output = string(out)
+		success = "failed"
+		return
+	}
+
+	out, err = exec.Command("./test").CombinedOutput()
+	if err != nil {
+		success = "failed"
+		log.Println("failed to run rust test")
+		log.Println(err.Error())
+		output = string(out)
+		success = "failed"
+		return
+	}
+	output = string(out)
 	return
 }
 
@@ -251,6 +287,14 @@ func HandleForm(writer http.ResponseWriter, request *http.Request) {
 	if jsonResponse.Status == "failed" {
 		jsonResponse.Error = compilationOutput
 		jsonResponse.CompiledSuccessfully = false
+		response, err := json.Marshal(&jsonResponse)
+		if err != nil {
+			fmt.Println(err)
+			http.Error(writer, "Error encoding response object", http.StatusInternalServerError)
+			return
+		}
+		writer.Write(response)
+		return
 	}
 
 	var testOutput string
@@ -260,7 +304,8 @@ func HandleForm(writer http.ResponseWriter, request *http.Request) {
 		jsonResponse.TestPassed = true
 	}
 	if jsonResponse.Status == "failed" {
-		jsonResponse.Error = compilationOutput + testOutput
+		jsonResponse.Output = ""
+		jsonResponse.Error = testOutput
 		jsonResponse.TestPassed = false
 	}
 
