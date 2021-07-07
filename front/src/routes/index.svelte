@@ -28,9 +28,9 @@
 	</a>
 
 	<!-- TODO change href-->
-	<a href="tutorial/c" slot="two">
-		<h2>C</h2>
-		<p>The most popular, powerful and flexible language ever.</p>
+	<a href="tutorial/rust" slot="two">
+		<h2>Rust</h2>
+		<p>New popular language, sponsored by Mozilla.</p>
 
 		<span class="learn-more"></span>
 	</a>

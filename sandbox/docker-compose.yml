@@ -6,6 +6,8 @@ services:
     build: api
     user: "runner"
     working_dir: "/home/runner/api"
+    ports:
+    - 8080:8080
     healthcheck:
       test: "${DOCKER_HEALTHCHECK_TEST:-./tests/test_all.sh}"
       interval: "60s"
