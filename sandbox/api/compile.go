@@ -53,12 +53,12 @@ func isLanguageSupported(givenLanguage string) (isSupported bool) {
 	return
 }
 
-func createFile(code, extension, fileName, prefix string) os.File {
+func createFile(code, extension, fileName, prefix, suffix string) os.File {
 	content := []byte(code)
 	var tmpFile *os.File
 	var err error
 	if fileName == "" {
-		tmpFile, err = ioutil.TempFile("", prefix+"*."+extension)
+		tmpFile, err = ioutil.TempFile("", prefix+"*"+suffix+"."+extension)
 	} else {
 		dir := os.TempDir()
 		fileName = filepath.Join(dir, fileName+"."+extension)
@@ -83,7 +83,7 @@ func closeFile(file os.File) {
 
 func compilePython(code string) (output, success string) {
 	success = "success"
-	pythonFile := createFile(code, "py", "", "")
+	pythonFile := createFile(code, "py", "", "", "")
 	defer os.Remove(pythonFile.Name())
 	out, err := exec.Command("python3", pythonFile.Name()).CombinedOutput()
 	if err != nil {
@@ -97,7 +97,7 @@ func compilePython(code string) (output, success string) {
 
 func compileRust(code string) (output, success string) {
 	success = "success"
-	rustFile := createFile(code, "rs", "", "")
+	rustFile := createFile(code, "rs", "", "", "")
 	defer os.Remove(rustFile.Name())
 	out, err := exec.Command("rustc", "--crate-name", "binary", rustFile.Name()).CombinedOutput()
 	if err != nil {
@@ -123,7 +123,7 @@ func compileRust(code string) (output, success string) {
 
 func compileGo(code string) (output, success string) {
 	success = "success"
-	goFile := createFile(code, "go", "", "")
+	goFile := createFile(code, "go", "", "", "")
 	defer os.Remove(goFile.Name())
 	out, err := exec.Command("go", "run", goFile.Name()).CombinedOutput()
 	if err != nil {
@@ -139,10 +139,10 @@ func testPython(code, test string) (output, success string) {
 
 	success = "success"
 
-	pythonCodeFile := createFile(code, "py", "main", "")
+	pythonCodeFile := createFile(code, "py", "main", "", "")
 	defer os.Remove(pythonCodeFile.Name())
 
-	pythonTestFile := createFile(test, "py", "", "")
+	pythonTestFile := createFile(test, "py", "", "", "")
 	defer os.Remove(pythonTestFile.Name())
 
 	out, err := exec.Command("python3", pythonTestFile.Name()).CombinedOutput()
@@ -159,14 +159,14 @@ func testRust(code, test string) (output, success string) {
 
 	success = "success"
 
-	rustCodeFile := createFile(code, "rs", "", "code")
+	rustCodeFile := createFile(code, "rs", "", "code", "")
 	defer os.Remove(rustCodeFile.Name())
 
 	// Replace EXERCISE_FILE_RANDOM by the name of the file so the test file can access the function
 	var replacer = strings.NewReplacer("EXERCISE_FILE_RANDOM", strings.TrimSuffix(filepath.Base(rustCodeFile.Name()), path.Ext(rustCodeFile.Name())))
 	test = replacer.Replace(test)
 
-	rustTestFile := createFile(test, "rs", "", "")
+	rustTestFile := createFile(test, "rs", "", "", "")
 	defer os.Remove(rustTestFile.Name())
 
 	out, err := exec.Command("rustc", "--test", "--crate-name", "test", rustTestFile.Name()).CombinedOutput()
@@ -194,6 +194,31 @@ func testRust(code, test string) (output, success string) {
 }
 
 func testGo(code, test string) (output, success string) {
+	success = "success"
+
+	//goModFile := createFile("module challenge\n\ngo 1.16\n", "mod", "go", "", "")
+	//defer os.Remove(goModFile.Name())
+
+	goCodeFile := createFile(code, "go", "", "", "")
+	fmt.Println(goCodeFile.Name())
+	defer os.Remove(goCodeFile.Name())
+
+	goTestFile := createFile(test, "go", "", "", "_test")
+	fmt.Println(goTestFile.Name())
+	defer os.Remove(goTestFile.Name())
+
+	cmd := exec.Command("go", "test")
+	cmd.Dir = "/tmp"
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		success = "failed"
+		log.Println("failed to run go test")
+		log.Println(err.Error())
+		output = string(out)
+		success = "failed"
+		return
+	}
+	output = string(out)
 	return
 }
 
