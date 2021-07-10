@@ -1,6 +1,0 @@
-github.com/CrowdSurge/banner v0.0.0-20140923200336-8c0e79dc5ff7 h1:O8iBqlhGQ/wRf7t1DPPsAOREXaISuTg757gfuFEI1l0=
-github.com/CrowdSurge/banner v0.0.0-20140923200336-8c0e79dc5ff7/go.mod h1:29J++XOrAqvtNYrJHCnRWYDg/L4ttVMXCSfPdvOS0/c=
-github.com/gorilla/mux v1.8.0 h1:i40aqfkR1h2SlN9hojwV5ZA91wcXFOvkdNIeFDP5koI=
-github.com/gorilla/mux v1.8.0/go.mod h1:DVbg23sWSpFRCP0SfiEN6jmj59UnW/n46BH5rLB71So=
-github.com/gorilla/schema v1.2.0 h1:YufUaxZYCKGFuAq3c96BOhjgd5nmXiOY9NGzF247Tsc=
-github.com/gorilla/schema v1.2.0/go.mod h1:kgLaKoK1FELgZqMAVxx/5cbj0kT+57qxUrAlIO2eleU=

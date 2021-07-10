@@ -14,6 +14,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 type languages []string
@@ -32,8 +33,14 @@ type JSONResponse struct {
 	Output               string `json:"output"`
 	CompiledSuccessfully bool   `json:"compiled_successfully"`
 	TestPassed           bool   `json:"test_passed"`
-	Timer                string `json:"timer"`
+	Duration             string `json:"duration"`
 	CodeQuality          int    `json:"code-quality"`
+}
+
+func timeTrack(start time.Time, name string) time.Duration {
+	elapsed := time.Since(start)
+	log.Printf("%s took %s", name, elapsed)
+	return elapsed
 }
 
 func isLanguageSupported(givenLanguage string) (isSupported bool) {
@@ -224,8 +231,9 @@ func testGo(code, test string) (output, success string) {
 
 // compileCode takes the code in arguments and the language
 // and send back the output, and a boolean to know if the program compile successfully
-func compileCode(code, language string) (output, success string) {
+func compileCode(code, language string) (output, success string, duration string) {
 	success = "failed"
+	start := time.Now()
 	switch language {
 	case "py":
 		output, success = compilePython(code)
@@ -234,6 +242,7 @@ func compileCode(code, language string) (output, success string) {
 	case "go":
 		output, success = compileGo(code)
 	}
+	duration = time.Since(start).String()
 	return
 }
 
@@ -304,7 +313,8 @@ func HandleForm(writer http.ResponseWriter, request *http.Request) {
 	}
 
 	var compilationOutput string
-	compilationOutput, jsonResponse.Status = compileCode(code.Code, code.Lang)
+
+	compilationOutput, jsonResponse.Status, jsonResponse.Duration = compileCode(code.Code, code.Lang)
 	if jsonResponse.Status == "success" {
 		jsonResponse.Output = compilationOutput
 		jsonResponse.CompiledSuccessfully = true
@@ -345,12 +355,7 @@ func HandleForm(writer http.ResponseWriter, request *http.Request) {
 
 func main() {
 	banner.Print("compile box")
-	out, err := exec.Command("./tests/test_all.sh").Output()
-	if err != nil {
-		fmt.Println(err.Error())
-		log.Fatal("ERROR: DOCKER IMAGE NOT CONFIGURED CORRECTLY. EXITING...")
-	}
-	fmt.Println(string(out))
+	displayIfEveryLangIsCorrectlyConfigured()
 	router := mux.NewRouter()
 	router.HandleFunc("/compile", HandleForm)
 	log.Fatal(http.ListenAndServe(":8080", router))

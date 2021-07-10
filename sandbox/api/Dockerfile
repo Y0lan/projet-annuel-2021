@@ -32,8 +32,7 @@ RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
 ENV PATH $PATH:$HOME/.cargo/bin
 
 # add project files
-COPY compile.go $API/compile.go
-ADD tests $API/tests
+ADD . $API
 USER root
 RUN chown -R $USER $API
 RUN chmod -R u+rwx $API
