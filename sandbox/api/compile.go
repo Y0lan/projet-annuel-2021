@@ -37,12 +37,6 @@ type JSONResponse struct {
 	CodeQuality          int    `json:"code-quality"`
 }
 
-func timeTrack(start time.Time, name string) time.Duration {
-	elapsed := time.Since(start)
-	log.Printf("%s took %s", name, elapsed)
-	return elapsed
-}
-
 func isLanguageSupported(givenLanguage string) (isSupported bool) {
 
 	isSupported = false
@@ -51,6 +45,7 @@ func isLanguageSupported(givenLanguage string) (isSupported bool) {
 		"go",
 		"rs",
 	}
+
 	for _, supportedLanguage := range supportedLanguages {
 		if givenLanguage == supportedLanguage {
 			isSupported = true
@@ -284,54 +279,12 @@ func testCode(code, test, language string) (output, success string) {
 	return
 }
 
-func HandleForm(writer http.ResponseWriter, request *http.Request) {
-	writer.Header().Set("Content-Type", "application/json")
-	jsonResponse := JSONResponse{
-		Status:               "failed",
-		CompiledSuccessfully: false,
-		TestPassed:           false,
-	}
-	err := request.ParseForm()
-	if err != nil {
-		print("Error parsing form!")
-		writer.WriteHeader(http.StatusBadRequest)
-		jsonResponse.Status = "error"
-		response, err := json.Marshal(&jsonResponse)
-		if err != nil {
-			fmt.Println(err)
-			http.Error(writer, "Error encoding response object", http.StatusInternalServerError)
-			return
-		}
-		writer.Write(response)
-	}
+func CompileAndTestCode(writer http.ResponseWriter, request *http.Request) {
 
-	var code CodeInputByUser
+	writer = setHeader(writer, "Content-Type", "application/json")
+	writer, request, jsonResponse, code := HandleForm(writer, request)
 
-	err = decoder.Decode(&code, request.PostForm)
-	if err != nil {
-		print("Error parsing form!")
-		writer.WriteHeader(http.StatusBadRequest)
-		jsonResponse.Status = "error"
-		response, err := json.Marshal(&jsonResponse)
-		if err != nil {
-			fmt.Println(err)
-			http.Error(writer, "Error encoding response object", http.StatusInternalServerError)
-			return
-		}
-		writer.Write(response)
-	}
-
-	if !isLanguageSupported(code.Lang) {
-		jsonResponse.Status = "error"
-		jsonResponse.Error = "language " + code.Lang + " is not supported"
-		writer.WriteHeader(http.StatusBadRequest)
-		response, err := json.Marshal(&jsonResponse)
-		if err != nil {
-			fmt.Println(err)
-			http.Error(writer, "Error encoding response object", http.StatusInternalServerError)
-			return
-		}
-		writer.Write(response)
+	if jsonResponse.Status != "" {
 		return
 	}
 
@@ -369,8 +322,7 @@ func HandleForm(writer http.ResponseWriter, request *http.Request) {
 
 	response, err := json.Marshal(&jsonResponse)
 	if err != nil {
-		fmt.Println(err)
-		http.Error(writer, "Error encoding response object", http.StatusInternalServerError)
+		writer = ReturnDecodingJSONError(writer, err)
 		return
 	}
 	writer.Write(response)
@@ -380,6 +332,6 @@ func main() {
 	banner.Print("compile box")
 	displayIfEveryLangIsCorrectlyConfigured()
 	router := mux.NewRouter()
-	router.HandleFunc("/compile", HandleForm)
+	router.HandleFunc("/compile", CompileAndTestCode)
 	log.Fatal(http.ListenAndServe(":8080", router))
 }
