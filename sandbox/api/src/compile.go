@@ -40,7 +40,7 @@ type JSONResponse struct {
 }
 
 type CodeResult struct {
-	isResultOfTest	 bool
+	isResultOfTest   bool
 	Duration         string
 	CodeQuality      int
 	CommandOutput    string
@@ -72,8 +72,7 @@ func isLanguageSupported(givenLanguage string) (isSupported bool) {
 // fileName (optional)  so that the file is not created with a random name
 // prefix (optional) to put BEFORE the random file name
 // suffix (optional) to put AFTER the random file name and BEFORE the extension
-func createTemporaryFile(content, extension, fileName, prefix, suffix string) os.File {
-	dir := getTemporaryDirectoryForCodeExecution()
+func createTemporaryFile(content, extension, fileName, prefix, suffix, dir string) os.File {
 	binaryContent := []byte(content)
 	var tmpFile *os.File
 	var err error
@@ -109,56 +108,48 @@ func getTemporaryDirectoryForCodeExecution() string {
 	return dir
 }
 
-func Compile() {
-	//TODO
-}
-
-func Execute(binaryName string) {
-	//TODO
-}
-
-func Test() {
-	//TODO
-
-}
-
 func ShowAndSetError(error error, message string) (status bool) {
 	log.Println(message)
 	log.Println(error.Error())
-	return false
+	return FAILURE
 }
 
 func compilePython(code string) (output string, status bool) {
-	pythonFile := createTemporaryFile(code, "py", "", "", "")
-	defer os.Remove(pythonFile.Name())
+
+	status = SUCCESS
+	dir := getTemporaryDirectoryForCodeExecution()
+	defer cleanUpTemporaryFiles(dir)
+
+	pythonFile := createTemporaryFile(code, "py", "", "", "", dir)
 
 	out, err := exec.Command("python3", pythonFile.Name()).CombinedOutput()
 	output = string(out)
 	if err != nil {
-		status = ShowAndSetError(err, "error in the given python code")
+		status = ShowAndSetError(err, output)
 	}
 	return
 }
 
 func compileRust(code string) (output string, status bool) {
 
-	rustFile := createTemporaryFile(code, "rs", "", "", "")
-	defer os.Remove(rustFile.Name())
+	status = SUCCESS
+	dir := getTemporaryDirectoryForCodeExecution()
+	defer cleanUpTemporaryFiles(dir)
+	rustFile := createTemporaryFile(code, "rs", "", "", "", dir)
 
 	out, err := exec.Command("rustc", "--crate-name", "binary", rustFile.Name()).CombinedOutput()
 	output = string(out)
 
 	if err != nil {
-		status = ShowAndSetError(err, "impossible to compile rust code")
+		status = ShowAndSetError(err, output)
 		return
 	}
 
 	out, err = exec.Command("./binary").CombinedOutput()
 	output = string(out)
-	defer os.Remove("binary")
 
 	if err != nil {
-		status = ShowAndSetError(err, "impossible to run the binary of the given rust code")
+		status = ShowAndSetError(err, output)
 	}
 
 	return
@@ -166,31 +157,33 @@ func compileRust(code string) (output string, status bool) {
 
 func compileGo(code string) (output string, status bool) {
 
-	goFile := createTemporaryFile(code, "go", "", "", "")
-	defer os.Remove(goFile.Name())
+	status = SUCCESS
+	dir := getTemporaryDirectoryForCodeExecution()
+	defer cleanUpTemporaryFiles(dir)
+	goFile := createTemporaryFile(code, "go", "", "", "", dir)
 
 	out, err := exec.Command("go", "run", goFile.Name()).CombinedOutput()
 	output = string(out)
 
 	if err != nil {
-		status = ShowAndSetError(err, "impossible to run this go code")
+		status = ShowAndSetError(err, output)
 	}
 	return
 }
 
 func testPython(code, test string) (output string, status bool) {
 
-	pythonCodeFile := createTemporaryFile(code, "py", "main", "", "")
-	defer os.Remove(pythonCodeFile.Name())
-
-	pythonTestFile := createTemporaryFile(test, "py", "", "", "")
-	defer os.Remove(pythonTestFile.Name())
+	status = SUCCESS
+	dir := getTemporaryDirectoryForCodeExecution()
+	defer cleanUpTemporaryFiles(dir)
+	createTemporaryFile(code, "py", "main", "", "", dir)
+	pythonTestFile := createTemporaryFile(test, "py", "", "", "", dir)
 
 	out, err := exec.Command("python3", pythonTestFile.Name()).CombinedOutput()
 	output = string(out)
 
 	if err != nil {
-		status = ShowAndSetError(err, "impossible to run python test")
+		status = ShowAndSetError(err, output)
 	}
 	return
 }
@@ -202,64 +195,103 @@ func enableTestFileToAccessSubmittedCode(test, moduleName string) string {
 	return test
 }
 
+func cleanUpTemporaryFiles(path string) {
+	err := os.RemoveAll(path)
+	if err != nil {
+		log.Fatal("Could not remove directory after completion")
+	}
+}
+
 func testRust(code, test string) (output string, status bool) {
 
-
-	rustCodeFile := createTemporaryFile(code, "rs", "", "code", "")
-	defer os.Remove(rustCodeFile.Name())
+	status = SUCCESS
+	dir := getTemporaryDirectoryForCodeExecution()
+	defer cleanUpTemporaryFiles(dir)
+	rustCodeFile := createTemporaryFile(code, "rs", "", "code", "", dir)
 
 	test = enableTestFileToAccessSubmittedCode(test, rustCodeFile.Name())
 
-	rustTestFile := createTemporaryFile(test, "rs", "", "", "")
-	defer os.Remove(rustTestFile.Name())
+	rustTestFile := createTemporaryFile(test, "rs", "", "", "", dir)
 
 	out, err := exec.Command("rustc", "--test", "--crate-name", "test", rustTestFile.Name()).CombinedOutput()
 	output = string(out)
 
 	if err != nil {
-		status = ShowAndSetError(err, "impossible to compile rust test")
+		status = ShowAndSetError(err, output)
 		return
 	}
 
 	out, err = exec.Command("./test").CombinedOutput()
 	output = string(out)
 	if err != nil {
-		status = ShowAndSetError(err, "failed to run rust test")
+		status = ShowAndSetError(err, output)
 	}
 	return
 }
 
 func testGo(code, test string) (output string, status bool) {
 
-	goModFile := createTemporaryFile("module challenge\n\ngo 1.16\n", "mod", "go", "", "")
-	defer os.Remove(goModFile.Name())
+	status = SUCCESS
+	dir := getTemporaryDirectoryForCodeExecution()
+	defer cleanUpTemporaryFiles(dir)
 
-	goCodeFile := createTemporaryFile(code, "go", "", "", "")
-	defer os.Remove(goCodeFile.Name())
+	createTemporaryFile("module challenge\n\ngo 1.16\n", "mod", "go", "", "", dir)
+	createTemporaryFile(code, "go", "", "", "", dir)
+	createTemporaryFile(test, "go", "", "", "_test", dir)
 
-	goTestFile := createTemporaryFile(test, "go", "", "", "_test")
-	defer os.Remove(goTestFile.Name())
+	command := exec.Command("go", "test")
+	command.Dir = dir
+	out, err := command.CombinedOutput()
 
-	out, err := exec.Command("go", "test").CombinedOutput()
 	output = string(out)
 
 	if err != nil {
-		status = ShowAndSetError(err, "failed to run go test")
+		status = ShowAndSetError(err, output)
 	}
 	return
 }
 
-func populateJsonResponse(result CodeResult, response *JSONResponse) {
-	if result.ExitSuccessfully {
-		response.Status =
-		response.Error =
+func populateJsonResponse(result CodeResult, response JSONResponse) JSONResponse {
+	var testPassed = result.ExitSuccessfully && response.CompiledSuccessfully
+	var testDidNotPass = !result.ExitSuccessfully && response.CompiledSuccessfully
+	var compilationPassed = result.ExitSuccessfully && !response.CompiledSuccessfully
+	var compilationDidNotPass = !result.ExitSuccessfully && !response.CompiledSuccessfully
+
+	if testPassed {
+		response.Status = "success"
+		response.Output = response.Output + result.CommandOutput
+		response.TestPassed = true
 	}
 
+	if compilationPassed {
+		response.Status = "success"
+		response.CompiledSuccessfully = true
+		response.Output = result.CommandOutput
+		response.Duration = result.Duration
+		response.CodeQuality = result.CodeQuality
+	}
+
+	if testDidNotPass {
+		response.Status = "failure"
+		response.TestPassed = false
+		response.Error = result.CommandOutput
+		response.CodeQuality = 0
+	}
+
+	if compilationDidNotPass {
+		response.Status = "failure"
+		response.Error = result.CommandOutput
+		response.CompiledSuccessfully = false
+		response.Output = ""
+		response.Error = result.CommandOutput
+		response.Duration = result.Duration
+	}
+	return response
 }
 
 // RedirectToCompiler takes the code in arguments and the language
 // and send back the output, and a boolean to know if the program compile successfully
-func RedirectToCompiler(code, language string, jsonResponse *JSONResponse) {
+func RedirectToCompiler(code, language string, jsonResponse JSONResponse) JSONResponse {
 	var result CodeResult
 	result.isResultOfTest = false
 	start := time.Now()
@@ -272,13 +304,13 @@ func RedirectToCompiler(code, language string, jsonResponse *JSONResponse) {
 		result.CommandOutput, result.ExitSuccessfully = compileGo(code)
 	}
 	result.Duration = time.Since(start).String()
-	populateJsonResponse(result, jsonResponse)
-	return
+	jsonResponse = populateJsonResponse(result, jsonResponse)
+	return jsonResponse
 }
 
 // RedirectToTester takes the code in arguments and the tests and the language
 // and send back the stdout  and a boolean to know if the program tested successfully
-func RedirectToTester(code, test, language string, jsonResponse *JSONResponse) (output string, status bool) {
+func RedirectToTester(code, test, language string, jsonResponse JSONResponse) JSONResponse {
 	var result CodeResult
 	result.isResultOfTest = true
 	switch language {
@@ -289,8 +321,8 @@ func RedirectToTester(code, test, language string, jsonResponse *JSONResponse) (
 	case "go":
 		result.CommandOutput, result.ExitSuccessfully = testGo(code, test)
 	}
-	populateJsonResponse(result, jsonResponse)
-	return
+	jsonResponse = populateJsonResponse(result, jsonResponse)
+	return jsonResponse
 }
 
 func CompileAndTestCode(writer http.ResponseWriter, request *http.Request) {
@@ -303,11 +335,11 @@ func CompileAndTestCode(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	RedirectToCompiler(code.Code, code.Lang, &jsonResponse)
+	jsonResponse = RedirectToCompiler(code.Code, code.Lang, jsonResponse)
 
 	// Why launch test on code that doesn't work ?
 	if jsonResponse.CompiledSuccessfully {
-		RedirectToTester(code.Code, code.Test, code.Lang, &jsonResponse)
+		jsonResponse = RedirectToTester(code.Code, code.Test, code.Lang, jsonResponse)
 	}
 
 	response, err := json.Marshal(&jsonResponse)
@@ -315,7 +347,10 @@ func CompileAndTestCode(writer http.ResponseWriter, request *http.Request) {
 		writer = ReturnDecodingJSONError(writer, err)
 		return
 	}
-	writer.Write(response)
+	_, err = writer.Write(response)
+	if err != nil {
+		log.Fatal("Could not write response to writer...")
+	}
 }
 
 func main() {
