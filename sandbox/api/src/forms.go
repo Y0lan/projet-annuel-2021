@@ -2,20 +2,20 @@ package main
 
 import "net/http"
 
-func HandleForm(writer http.ResponseWriter, request *http.Request) (http.ResponseWriter, *http.Request, JSONResponse, CodeInputByUser) {
+func HandleForm(writer http.ResponseWriter, request *http.Request) (http.ResponseWriter, *http.Request, JSONResponse, CodeData) {
 	jsonResponse := getDefaultJsonResponse()
-	var code CodeInputByUser
+	var data CodeData
 	var response []byte
 
 	*request, response = ParseForm(writer, *request, jsonResponse)
-	code, response = DecodeForm(writer, *request, jsonResponse)
+	data, response = DecodeForm(writer, *request, jsonResponse)
 
-	if !isLanguageSupported(code.Lang) {
-		response = ReturnErrors(writer, jsonResponse, "language "+code.Lang+" is not supported", "error", http.StatusBadRequest)
+	if !isLanguageSupported(data.Lang) {
+		response = ReturnErrors(writer, jsonResponse, "language "+data.Lang+" is not supported", "error", http.StatusBadRequest)
 	}
 
 	writer.Write(response)
-	return writer, request, jsonResponse, code
+	return writer, request, jsonResponse, data
 }
 
 func ParseForm(writer http.ResponseWriter, request http.Request, jsonResponse JSONResponse) (http.Request, []byte) {
@@ -27,13 +27,13 @@ func ParseForm(writer http.ResponseWriter, request http.Request, jsonResponse JS
 	return request, nil
 }
 
-func DecodeForm(writer http.ResponseWriter, request http.Request, jsonResponse JSONResponse) (CodeInputByUser, []byte) {
-	var code CodeInputByUser
-	err := decoder.Decode(&code, request.PostForm)
+func DecodeForm(writer http.ResponseWriter, request http.Request, jsonResponse JSONResponse) (CodeData, []byte) {
+	var data CodeData
+	err := decoder.Decode(&data, request.PostForm)
 
 	if err != nil {
 		response := ReturnErrors(writer, jsonResponse, "error parsing form", "error", http.StatusBadRequest)
-		return code, response
+		return data, response
 	}
-	return code, nil
+	return data, nil
 }

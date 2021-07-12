@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 )
 
@@ -23,4 +24,10 @@ func ReturnDecodingJSONError(writer http.ResponseWriter, error error) http.Respo
 	fmt.Println(error.Error())
 	http.Error(writer, "Error encoding response object", http.StatusInternalServerError)
 	return writer
+}
+
+func ShowAndSetError(error error, message string) (status bool) {
+	log.Println(message)
+	log.Println(error.Error())
+	return FAILURE
 }
