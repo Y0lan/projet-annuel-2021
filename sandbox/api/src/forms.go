@@ -1,6 +1,9 @@
 package main
 
-import "net/http"
+import (
+	"log"
+	"net/http"
+)
 
 func HandleForm(writer http.ResponseWriter, request *http.Request) (http.ResponseWriter, *http.Request, JSONResponse, CodeData) {
 	jsonResponse := getDefaultJsonResponse()
@@ -14,7 +17,10 @@ func HandleForm(writer http.ResponseWriter, request *http.Request) (http.Respons
 		response = ReturnErrors(writer, jsonResponse, "language "+data.Lang+" is not supported", "error", http.StatusBadRequest)
 	}
 
-	writer.Write(response)
+	_, err := writer.Write(response)
+	if err != nil {
+		log.Fatal("Error while handling form, wtf did you do ???")
+	}
 	return writer, request, jsonResponse, data
 }
 
