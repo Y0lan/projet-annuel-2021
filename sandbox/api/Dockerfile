@@ -32,7 +32,8 @@ RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
 ENV PATH $PATH:$HOME/.cargo/bin
 
 # add project files
-ADD . $API
+ADD src $API/src
+ADD tests $API/tests
 USER root
 RUN chown -R $USER $API
 RUN chmod -R u+rwx $API
@@ -44,11 +45,12 @@ WORKDIR $API
 RUN ./tests/test_all.sh
 
 # get go dependencies for the api
+WORKDIR $API/src
 RUN go get -d ./...
 
 # build the api
 RUN go build -o main .
 
 # run the api
-CMD ["/home/runner/api/main"]
+CMD ["/home/runner/api/src/main"]
 
