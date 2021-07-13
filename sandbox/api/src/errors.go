@@ -10,7 +10,7 @@ import (
 func ReturnErrors(writer http.ResponseWriter, jsonResponse JSONResponse, message, jsonStatus string, httpStatusCode int) []byte {
 	print(message)
 	writer.WriteHeader(httpStatusCode)
-	jsonResponse.Status = jsonStatus //TODO make into enum
+	jsonResponse.Status = jsonStatus
 	jsonResponse.Error = message
 	response, err := json.Marshal(&jsonResponse)
 	if err != nil {
