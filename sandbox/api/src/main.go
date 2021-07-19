@@ -105,6 +105,11 @@ func CompileAndTestCode(writer http.ResponseWriter, request *http.Request) {
 		jsonResponse = RedirectToTester(data, jsonResponse)
 	}
 
+	// let's analyse the AST
+	if jsonResponse.CompiledSuccessfully && jsonResponse.TestPassed {
+		EvaluateCodeQuality(data)
+	}
+
 	response, err := json.Marshal(&jsonResponse)
 	if err != nil {
 		writer = ReturnDecodingJSONError(writer, err)

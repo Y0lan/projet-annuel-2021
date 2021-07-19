@@ -1,22 +1,21 @@
 package main
 
 import (
-	"github.com/davecgh/go-spew/spew"
-	"go/parser"
+	"fmt"
+	"go/ast"
 	"go/token"
-	"log"
 )
 
-type Code struct {
-	body   string
-	health int
+func EvaluateCodeQuality(data CodeData) {
+	data.Code = minimize(data.Code)
+	Ast := convertToAST(data.Code)
+	codeComplexity := EvaluateCodeComplexity(Ast)
+	fmt.Println(codeComplexity)
 }
 
-func convertToAST(code Code) {
-	tokenFileSet := token.NewFileSet()
-	ast, error := parser.ParseFile(tokenFileSet, "", code.body, parser.AllErrors)
-	if error != nil {
-		log.Fatal(error.Error())
-	}
-	spew.Dump(ast)
+func EvaluateCodeComplexity(Ast *ast.File) float64 {
+	var stats Stats
+	fset := token.NewFileSet()
+	stats = AnalyzeASTFile(Ast, fset, stats)
+	return stats.AverageComplexity()
 }
