@@ -34,14 +34,6 @@ func (s Stats) TotalComplexity() uint64 {
 	return total
 }
 
-type byComplexityDesc Stats
-
-func (s byComplexityDesc) Len() int      { return len(s) }
-func (s byComplexityDesc) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
-func (s byComplexityDesc) Less(i, j int) bool {
-	return s[i].Complexity >= s[j].Complexity
-}
-
 // Complexity calculates the cyclomatic complexity of a function.
 // The 'fn' node is either a *ast.FuncDecl or a *ast.FuncLit.
 func Complexity(fn ast.Node) int {
