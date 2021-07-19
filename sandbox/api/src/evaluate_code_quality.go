@@ -1,14 +1,22 @@
 package main
 
+import (
+	"github.com/davecgh/go-spew/spew"
+	"go/parser"
+	"go/token"
+	"log"
+)
+
 type Code struct {
 	body   string
 	health int
 }
 
-func minimize(code Code, lang string) (minimizedCode string) {
-	return
-}
-
-func isGoodSize(codeSubmitted, codeOfCorrection string) (point int) {
-	return
+func convertToAST(code Code) {
+	tokenFileSet := token.NewFileSet()
+	ast, error := parser.ParseFile(tokenFileSet, "", code.body, parser.AllErrors)
+	if error != nil {
+		log.Fatal(error.Error())
+	}
+	spew.Dump(ast)
 }
