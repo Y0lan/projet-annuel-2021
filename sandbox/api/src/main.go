@@ -18,18 +18,18 @@ type languages []string
 var decoder = schema.NewDecoder()
 
 type JSONResponse struct {
-	Status               string `json:"status"`
-	Error                string `json:"error"`
-	Output               string `json:"output"`
-	CompiledSuccessfully bool   `json:"compiled_successfully"`
-	TestPassed           bool   `json:"test_passed"`
-	Duration             string `json:"duration"`
-	CodeQuality          int    `json:"code-quality"`
+	Status               string  `json:"status"`
+	Error                string  `json:"error"`
+	Output               string  `json:"output"`
+	CompiledSuccessfully bool    `json:"compiled_successfully"`
+	TestPassed           bool    `json:"test_passed"`
+	Duration             string  `json:"duration"`
+	CodeQuality          float64 `json:"code-quality"`
 }
 
 type CodeData struct {
 	Duration         string
-	CodeQuality      int
+	CodeQuality      float64
 	CommandOutput    string
 	ExitSuccessfully bool
 	Code             string
@@ -67,6 +67,7 @@ func RedirectToCompiler(data CodeData, jsonResponse JSONResponse) JSONResponse {
 	case "rs":
 		data.CommandOutput, data.ExitSuccessfully = compileRust(data.Code)
 	case "go":
+		data.Code += "\nfunc main() {}"
 		data.CommandOutput, data.ExitSuccessfully = compileGo(data.Code)
 	}
 	data.Duration = time.Since(start).String()
@@ -83,6 +84,7 @@ func RedirectToTester(data CodeData, jsonResponse JSONResponse) JSONResponse {
 	case "rs":
 		data.CommandOutput, data.ExitSuccessfully = testRust(data.Code, data.Test)
 	case "go":
+		data.Code += "\nfunc main() {}"
 		data.CommandOutput, data.ExitSuccessfully = testGo(data.Code, data.Test)
 	}
 	jsonResponse = populateJsonResponse(data, jsonResponse)
@@ -107,7 +109,7 @@ func CompileAndTestCode(writer http.ResponseWriter, request *http.Request) {
 
 	// let's analyse the AST
 	if jsonResponse.CompiledSuccessfully && jsonResponse.TestPassed {
-		EvaluateCodeQuality(data)
+		jsonResponse = EvaluateCodeQuality(data, jsonResponse)
 	}
 
 	response, err := json.Marshal(&jsonResponse)

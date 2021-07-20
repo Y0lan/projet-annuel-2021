@@ -42,10 +42,6 @@ func isVariable(token string) bool {
 	return token == "var"
 }
 
-func isFunction(token string) bool {
-	return token == "func"
-}
-
 func isSpaceString(token string) bool {
 	return token == " "
 }
@@ -123,6 +119,8 @@ func NewScanner(input string) *scanner.Scanner {
 }
 
 func minimize(code string) (minimizedCode string) {
+	// Remove whitespace
+	code = strings.Replace(code, "\n\n", "\n", 1)
 	var renamedVariables = make(map[string]string)
 	var shortNames = NewShortNames()
 
@@ -169,7 +167,7 @@ func minimize(code string) (minimizedCode string) {
 		if bufferFull {
 			minimizedCode += tokenToWrite
 		}
-
+		// DEBUG
 		// fmt.Printf("%s: %s\n", s.Position, tokenText)
 	}
 	// empty the buffer after everything was read

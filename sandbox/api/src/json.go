@@ -6,6 +6,7 @@ func getDefaultJsonResponse() JSONResponse {
 		Output:               "No output",
 		CompiledSuccessfully: false,
 		TestPassed:           false,
+		CodeQuality:          80.0,
 	}
 }
 
