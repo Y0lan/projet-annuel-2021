@@ -9,10 +9,11 @@ import (
 // Stat holds the cyclomatic complexity of a function, along with its package
 // and and function name and its position in the source code.
 type Stat struct {
-	PkgName    string
-	FuncName   string
-	Complexity int
-	Pos        token.Position
+	PkgName      string
+	FuncName     string
+	Complexity   int
+	NumberOfLine int
+	Pos          token.Position
 }
 
 // Stats hold the cyclomatic complexities of many functions.
