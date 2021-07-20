@@ -9,37 +9,20 @@ import (
 )
 
 func EvaluateCodeQuality(data CodeData, jsonResponse JSONResponse) JSONResponse {
+	health := jsonResponse.CodeQuality
 	// MINIMIZE
 	data.Code = minimize(data.Code)
 	data.Solution = minimize(data.Solution)
 
 	// CONVERT TO AST
-	AstSubmitted := convertToAST(data.Code)
-	AstSolution := convertToAST(data.Solution)
+	astSubmitted := convertToAST(data.Code)
+	astSolution := convertToAST(data.Solution)
 
-	// Calculate Code Complexity
-	codeComplexitySubmitted := EvaluateCodeComplexity(AstSubmitted)
-	codeComplexitySolution := EvaluateCodeComplexity(AstSolution)
+	health = GetCodeComplexityResult(astSubmitted, astSolution, health)
+	health = GetLineNumberResult(data.Code, data.Solution, health)
 
-	slocSubmitted := GetNumberOfLine(data.Code)
-	slocSolution := GetNumberOfLine(data.Solution)
+	jsonResponse.CodeQuality = health
 
-	fmt.Print("cc submit :")
-	fmt.Printf("%f", codeComplexitySubmitted)
-
-	fmt.Print("cc solution :")
-	fmt.Printf("%f", codeComplexitySolution)
-	fmt.Println()
-
-	fmt.Print("lc submit :")
-	fmt.Printf("%d", slocSubmitted)
-	fmt.Println()
-
-	fmt.Print("lc solution :")
-	fmt.Printf("%d", slocSolution)
-	fmt.Println()
-
-	jsonResponse.CodeQuality = 0
 	return jsonResponse
 }
 
@@ -48,6 +31,14 @@ func EvaluateCodeComplexity(Ast *ast.File) float64 {
 	fset := token.NewFileSet()
 	stats = AnalyzeASTFile(Ast, fset, stats)
 	return stats.AverageComplexity()
+}
+
+func GetCodeComplexityResult(astSubmitted, astSolution *ast.File, health float64) float64 {
+	// Calculate Code Complexity
+	codeComplexitySubmitted := EvaluateCodeComplexity(astSubmitted)
+	codeComplexitySolution := EvaluateCodeComplexity(astSolution)
+	point := (codeComplexitySubmitted - codeComplexitySolution) * 10
+	return health + point
 }
 
 // GetNumberOfLine return the number of line excluding function signature and import / package
@@ -66,4 +57,11 @@ func GetNumberOfLine(code string) (counter int) {
 		}
 	}
 	return
+}
+
+func GetLineNumberResult(codeSubmitted, codeSolution string, health float64) float64 {
+	slocSubmitted := GetNumberOfLine(codeSubmitted)
+	slocSolution := GetNumberOfLine(codeSolution)
+	point := float64(slocSolution-slocSubmitted) * 3
+	return health + point
 }
