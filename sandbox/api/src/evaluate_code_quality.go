@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"fmt"
 	"go/ast"
 	"go/token"
 	"strings"
@@ -21,6 +20,14 @@ func EvaluateCodeQuality(data CodeData, jsonResponse JSONResponse) JSONResponse 
 	health = GetCodeComplexityResult(astSubmitted, astSolution, health)
 	health = GetLineNumberResult(data.Code, data.Solution, health)
 
+	if health > 100 {
+		health = 100
+	}
+
+	if health < 0 {
+		health = 0
+	}
+
 	jsonResponse.CodeQuality = health
 
 	return jsonResponse
@@ -37,7 +44,8 @@ func GetCodeComplexityResult(astSubmitted, astSolution *ast.File, health float64
 	// Calculate Code Complexity
 	codeComplexitySubmitted := EvaluateCodeComplexity(astSubmitted)
 	codeComplexitySolution := EvaluateCodeComplexity(astSolution)
-	point := (codeComplexitySubmitted - codeComplexitySolution) * 10
+	point := (codeComplexitySolution - codeComplexitySubmitted) * 5
+
 	return health + point
 }
 
@@ -52,7 +60,6 @@ func GetNumberOfLine(code string) (counter int) {
 			!strings.HasPrefix(line, "\"") &&
 			!strings.HasPrefix(line, "import") &&
 			!strings.HasPrefix(line, "package") {
-			fmt.Println(line)
 			counter++
 		}
 	}
