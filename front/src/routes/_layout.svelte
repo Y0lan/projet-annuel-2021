@@ -2,6 +2,7 @@
     import {setContext} from 'svelte';
     import {stores} from '@sapper/app';
     import {Icons, Nav, NavItem} from '@sveltejs/site-kit';
+    //import {SignForm} from 'src/components/login/SignForm.svelte'
 
     export let segment;
 
@@ -31,8 +32,8 @@
 <Icons/>
 
 <Nav {segment} {page} logo="progress-logo-horizontal.svg">
-    <NavItem segment="tutorial">Login</NavItem>
-    <NavItem segment="docs">Signup</NavItem>
+    <NavItem segment="login">Login</NavItem>
+    <NavItem segment="SignForm">Signup</NavItem>
 </Nav>
 
 <main>
