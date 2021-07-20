@@ -1,3 +1,4 @@
+
 <script context="module">
 	export async function preload(page, { user }) {
 		let apps = [];
