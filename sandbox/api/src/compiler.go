@@ -1,60 +1,67 @@
 package main
 
-import "os/exec"
+import (
+	"os/exec"
+)
 
-func compilePython(code string) (output string, status bool) {
-
-	status = SUCCESS
+func compilePython(code string, command chan Command) {
+	result := Command{
+		output: "",
+		status: SUCCESS,
+	}
 	dir := getTemporaryDirectoryForCodeExecution()
 	defer cleanUpTemporaryFiles(dir)
 
 	pythonFile := createTemporaryFile(code, "py", "", "", "", dir)
 
 	out, err := exec.Command("python3", pythonFile.Name()).CombinedOutput()
-	output = string(out)
 	if err != nil {
-		status = ShowAndSetError(err, output)
+		result.status = ShowAndSetError(err, string(out))
 	}
-	return
+	result.output = string(out)
+	command <- result
 }
 
-func compileRust(code string) (output string, status bool) {
-
-	status = SUCCESS
+func compileRust(code string, command chan Command) {
+	result := Command{
+		output: "",
+		status: SUCCESS,
+	}
 	dir := getTemporaryDirectoryForCodeExecution()
 	defer cleanUpTemporaryFiles(dir)
 	rustFile := createTemporaryFile(code, "rs", "", "", "", dir)
 
 	out, err := exec.Command("rustc", "--crate-name", "binary", rustFile.Name()).CombinedOutput()
-	output = string(out)
 
 	if err != nil {
-		status = ShowAndSetError(err, output)
-		return
+		result.status = ShowAndSetError(err, string(out))
 	}
 
 	out, err = exec.Command("./binary").CombinedOutput()
-	output = string(out)
 
 	if err != nil {
-		status = ShowAndSetError(err, output)
+		result.status = ShowAndSetError(err, string(out))
 	}
-
-	return
+	result.output = string(out)
+	command <- result
 }
 
-func compileGo(code string) (output string, status bool) {
+func compileGo(code string, command chan Command) {
 
-	status = SUCCESS
+	result := Command{
+		output: "",
+		status: SUCCESS,
+	}
+
 	dir := getTemporaryDirectoryForCodeExecution()
 	defer cleanUpTemporaryFiles(dir)
 	goFile := createTemporaryFile(code, "go", "", "", "", dir)
 
 	out, err := exec.Command("go", "run", goFile.Name()).CombinedOutput()
-	output = string(out)
 
 	if err != nil {
-		status = ShowAndSetError(err, output)
+		result.status = ShowAndSetError(err, string(out))
 	}
-	return
+	result.output = string(out)
+	command <- result
 }

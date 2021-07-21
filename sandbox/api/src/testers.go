@@ -7,21 +7,23 @@ import (
 	"strings"
 )
 
-func testPython(code, test string) (output string, status bool) {
+func testPython(code, test string, command chan Command) {
+	result := Command{
+		output: "",
+		status: SUCCESS,
+	}
 
-	status = SUCCESS
 	dir := getTemporaryDirectoryForCodeExecution()
 	defer cleanUpTemporaryFiles(dir)
 	createTemporaryFile(code, "py", "main", "", "", dir)
 	pythonTestFile := createTemporaryFile(test, "py", "", "", "", dir)
 
 	out, err := exec.Command("python3", pythonTestFile.Name()).CombinedOutput()
-	output = string(out)
 
 	if err != nil {
-		status = ShowAndSetError(err, output)
+		result.status = ShowAndSetError(err, string(out))
 	}
-	return
+	command <- result
 }
 
 // enableTestFileToAccessSubmittedCode replace EXERCISE_FILE_RANDOM by the name of the file so the test file can access the function
@@ -31,9 +33,12 @@ func enableTestFileToAccessSubmittedCode(test, moduleName string) string {
 	return test
 }
 
-func testRust(code, test string) (output string, status bool) {
+func testRust(code, test string, command chan Command) {
 
-	status = SUCCESS
+	result := Command{
+		output: "",
+		status: SUCCESS,
+	}
 	dir := getTemporaryDirectoryForCodeExecution()
 	defer cleanUpTemporaryFiles(dir)
 	rustCodeFile := createTemporaryFile(code, "rs", "", "code", "", dir)
@@ -43,24 +48,24 @@ func testRust(code, test string) (output string, status bool) {
 	rustTestFile := createTemporaryFile(test, "rs", "", "", "", dir)
 
 	out, err := exec.Command("rustc", "--test", "--crate-name", "test", rustTestFile.Name()).CombinedOutput()
-	output = string(out)
 
 	if err != nil {
-		status = ShowAndSetError(err, output)
-		return
+		result.status = ShowAndSetError(err, string(out))
 	}
 
 	out, err = exec.Command("./test").CombinedOutput()
-	output = string(out)
 	if err != nil {
-		status = ShowAndSetError(err, output)
+		result.status = ShowAndSetError(err, string(out))
 	}
-	return
+	result.output = string(out)
+	command <- result
 }
 
-func testGo(code, test string) (output string, status bool) {
-
-	status = SUCCESS
+func testGo(code, test string, command chan Command) {
+	result := Command{
+		output: "",
+		status: SUCCESS,
+	}
 	dir := getTemporaryDirectoryForCodeExecution()
 	defer cleanUpTemporaryFiles(dir)
 
@@ -68,14 +73,14 @@ func testGo(code, test string) (output string, status bool) {
 	createTemporaryFile(code, "go", "", "", "", dir)
 	createTemporaryFile(test, "go", "", "", "_test", dir)
 
-	command := exec.Command("go", "test")
-	command.Dir = dir
-	out, err := command.CombinedOutput()
-
-	output = string(out)
+	execCommand := exec.Command("go", "test")
+	execCommand.Dir = dir
+	out, err := execCommand.CombinedOutput()
 
 	if err != nil {
-		status = ShowAndSetError(err, output)
+		result.status = ShowAndSetError(err, string(out))
 	}
-	return
+
+	result.output = string(out)
+	command <- result
 }

@@ -8,7 +8,15 @@ import (
 )
 
 func EvaluateCodeQuality(data CodeData, jsonResponse JSONResponse) JSONResponse {
+
+	if data.Lang == "py" || data.Lang == "rs" {
+		jsonResponse.Error = "Code Quality not set for " + data.Lang + " files"
+		jsonResponse.CodeQuality = 0
+		return jsonResponse
+	}
+
 	health := jsonResponse.CodeQuality
+
 	// MINIMIZE
 	data.Code = minimize(data.Code)
 	data.Solution = minimize(data.Solution)
@@ -19,6 +27,7 @@ func EvaluateCodeQuality(data CodeData, jsonResponse JSONResponse) JSONResponse 
 
 	health = GetCodeComplexityResult(astSubmitted, astSolution, health)
 	health = GetLineNumberResult(data.Code, data.Solution, health)
+	health = GetExitPointResult(data.Code, data.Solution, health)
 
 	if health > 100 {
 		health = 100
@@ -70,5 +79,25 @@ func GetLineNumberResult(codeSubmitted, codeSolution string, health float64) flo
 	slocSubmitted := GetNumberOfLine(codeSubmitted)
 	slocSolution := GetNumberOfLine(codeSolution)
 	point := float64(slocSolution-slocSubmitted) * 3
+	return health + point
+}
+
+// GetNumberOfExitPoint return the number of exit point in a file
+func GetNumberOfExitPoint(code string) (counter int) {
+	scanner := bufio.NewScanner(strings.NewReader(code))
+	for scanner.Scan() {
+		line := scanner.Text()
+		line = strings.Trim(line, " \t")
+		if strings.HasPrefix(line, "return") {
+			counter++
+		}
+	}
+	return
+}
+
+func GetExitPointResult(codeSubmitted, codeSolution string, health float64) float64 {
+	nbExitPointSubmitted := GetNumberOfExitPoint(codeSubmitted)
+	nbExitPointSolution := GetNumberOfExitPoint(codeSolution)
+	point := float64(nbExitPointSolution-nbExitPointSubmitted) * 2.5
 	return health + point
 }

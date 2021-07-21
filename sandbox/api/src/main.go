@@ -38,6 +38,11 @@ type CodeData struct {
 	Solution         string
 }
 
+type Command struct {
+	output string
+	status bool
+}
+
 // isLanguageSupported that a language and tells if it's supported by our compiler
 func isLanguageSupported(givenLanguage string) (isSupported bool) {
 
@@ -61,14 +66,21 @@ func isLanguageSupported(givenLanguage string) (isSupported bool) {
 // and send back the output, and a boolean to know if the program compile successfully
 func RedirectToCompiler(data CodeData, jsonResponse JSONResponse) JSONResponse {
 	start := time.Now()
+	command := make(chan Command)
 	switch data.Lang {
 	case "py":
-		data.CommandOutput, data.ExitSuccessfully = compilePython(data.Code)
+		go compilePython(data.Code, command)
+		result := <-command
+		data.CommandOutput, data.ExitSuccessfully = result.output, result.status
 	case "rs":
-		data.CommandOutput, data.ExitSuccessfully = compileRust(data.Code)
+		go compileRust(data.Code, command)
+		result := <-command
+		data.CommandOutput, data.ExitSuccessfully = result.output, result.status
 	case "go":
 		data.Code += "\nfunc main() {}"
-		data.CommandOutput, data.ExitSuccessfully = compileGo(data.Code)
+		go compileGo(data.Code, command)
+		result := <-command
+		data.CommandOutput, data.ExitSuccessfully = result.output, result.status
 	}
 	data.Duration = time.Since(start).String()
 	jsonResponse = populateJsonResponse(data, jsonResponse)
@@ -78,14 +90,21 @@ func RedirectToCompiler(data CodeData, jsonResponse JSONResponse) JSONResponse {
 // RedirectToTester takes the code in arguments and the tests and the language
 // and send back the stdout  and a boolean to know if the program tested successfully
 func RedirectToTester(data CodeData, jsonResponse JSONResponse) JSONResponse {
+	command := make(chan Command)
 	switch data.Lang {
 	case "py":
-		data.CommandOutput, data.ExitSuccessfully = testPython(data.Code, data.Test)
+		go testPython(data.Code, data.Test, command)
+		result := <-command
+		data.CommandOutput, data.ExitSuccessfully = result.output, result.status
 	case "rs":
-		data.CommandOutput, data.ExitSuccessfully = testRust(data.Code, data.Test)
+		go testRust(data.Code, data.Test, command)
+		result := <-command
+		data.CommandOutput, data.ExitSuccessfully = result.output, result.status
 	case "go":
 		data.Code += "\nfunc main() {}"
-		data.CommandOutput, data.ExitSuccessfully = testGo(data.Code, data.Test)
+		go testGo(data.Code, data.Test, command)
+		result := <-command
+		data.CommandOutput, data.ExitSuccessfully = result.output, result.status
 	}
 	jsonResponse = populateJsonResponse(data, jsonResponse)
 	return jsonResponse
@@ -117,6 +136,7 @@ func CompileAndTestCode(writer http.ResponseWriter, request *http.Request) {
 		writer = ReturnDecodingJSONError(writer, err)
 		return
 	}
+	log.Println("200 - SUCCESS")
 	_, err = writer.Write(response)
 	if err != nil {
 		log.Fatal("Could not write response to writer...")
