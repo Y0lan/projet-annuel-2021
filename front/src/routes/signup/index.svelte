@@ -119,7 +119,7 @@
         <form class="login-form">
             <input type="text" placeholder="username"/>
             <input type="password" placeholder="password"/>
-            <button>login</button>
+            <button>Sign Up</button>
             <p class="message">already have an account? <a href="login">Login</a></p>
         </form>
     </div>

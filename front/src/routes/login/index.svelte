@@ -119,7 +119,7 @@
         <form class="login-form">
             <input type="text" placeholder="username"/>
             <input type="password" placeholder="password"/>
-            <button>Sign up</button>
+            <button>Login</button>
             <p class="message">not registered? <a href="signup">create an account</a></p>
         </form>
     </div>
