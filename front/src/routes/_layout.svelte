@@ -33,7 +33,7 @@
 
 <Nav {segment} {page} logo="progress-logo-horizontal.svg">
     <NavItem segment="login">Login</NavItem>
-    <NavItem segment="SignForm">Signup</NavItem>
+    <NavItem segment="signup">Signup</NavItem>
 </Nav>
 
 <main>

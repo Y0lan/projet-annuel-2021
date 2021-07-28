@@ -5,12 +5,12 @@ export function process_example(files) {
 			return { name, type, source: file.source };
 		})
 		.sort((a, b) => {
-			if (a.name === 'App' && a.type === 'svelte') return -1;
-			if (b.name === 'App' && b.type === 'svelte') return 1;
+			if (a.name === 'main' && a.type === 'go') return -1;
+			if (b.name === 'main' && b.type === 'go') return 1;
 
 			if (a.type === b.type) return a.name < b.name ? -1 : 1;
 
-			if (a.type === 'svelte') return -1;
-			if (b.type === 'svelte') return 1;
+			if (a.type === 'go') return -1;
+			if (b.type === 'go') return 1;
 		});
 }
