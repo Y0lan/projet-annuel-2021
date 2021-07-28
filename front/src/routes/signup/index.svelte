@@ -112,14 +112,14 @@
     <div class="form">
         <div class="login">
             <div class="login-header">
-                <h3>SignUp</h3>
+                <h3>SIGNUP</h3>
                 <p>Please enter your credentials to sign up.</p>
             </div>
         </div>
         <form class="login-form">
             <input type="text" placeholder="username"/>
             <input type="password" placeholder="password"/>
-            <button>Sign Up</button>
+            <button>Register</button>
             <p class="message">already have an account? <a href="login">Login</a></p>
         </form>
     </div>
