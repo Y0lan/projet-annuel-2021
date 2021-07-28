@@ -14,8 +14,8 @@ import (
 	"github.com/form3tech-oss/jwt-go"
 	"github.com/gofiber/fiber/v2"
 	"gopkg.in/asaskevich/govalidator.v9"
-	"gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
+	"github.com/globalsign/mgo"
+	"github.com/globalsign/mgo/bson"
 )
 
 type AuthController interface {

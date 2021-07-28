@@ -5,17 +5,17 @@ import (
 	"authentification/db"
 	"authentification/repository"
 	"authentification/routes"
-	"log"
-	"net/http"
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/joho/godotenv"
+	"log"
+	"net/http"
 )
 
 func init() {
 	err := godotenv.Load("database.env")
+
 	if err != nil {
 		log.Panicln(err)
 	}

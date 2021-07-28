@@ -2,11 +2,10 @@ package db
 
 import (
 	"fmt"
+	"github.com/globalsign/mgo"
 	"log"
 	"os"
 	"strconv"
-
-	"gopkg.in/mgo.v2"
 )
 
 type Connection interface {
@@ -22,6 +21,7 @@ func NewConnection() Connection {
 	var c conn
 	var err error
 	url := getURL()
+	fmt.Println(url)
 	c.session, err = mgo.Dial(url)
 	if err != nil {
 		log.Panicln(err.Error())

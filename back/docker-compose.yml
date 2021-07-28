@@ -3,7 +3,7 @@ services:
   db:
     hostname: db
     container_name: backend-mongodb
-    image: mongo
+    image: mongo:4
     ports:
       - 27017:27017
     volumes:

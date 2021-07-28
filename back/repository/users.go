@@ -3,9 +3,8 @@ package repository
 import (
 	"authentification/db"
 	"authentification/models"
-
-	"gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
+	"github.com/globalsign/mgo"
+	"github.com/globalsign/mgo/bson"
 )
 
 const UsersCollection = "users"
