@@ -120,7 +120,7 @@
             <input type="text" placeholder="username"/>
             <input type="password" placeholder="password"/>
             <button>login</button>
-            <p class="message">already have an account? <a href="./src/routes/login/index.svelte">Login</a></p>
+            <p class="message">already have an account? <a href="login">Login</a></p>
         </form>
     </div>
 </div>
